@@ -1,0 +1,87 @@
+%Def antecedencias
+Ai=@(a,b,c,d, ran)matfun(@(x)MFTrap(a,b,c,d,x ), ran);
+A1=@(x) Ai(0,3,9,9,x); 
+A2=@(x) Ai(0,5,15,17, x); 
+A3=@(x) Ai(0,6,10,16, x); 
+A4=@(x) Ai(0,4,11, 20, x);
+Antecedencias=@(x) [A1(x); A2(x);  A3(x);  A4(x)];   
+
+%Def consecuencias
+Ci=@(m,n,s1,s2, ran)matfun(@(x)MFGauss(m,n,s1,s2,x ), ran);
+C1=@(x) Ci(0,7,0.5, 1.1,x); 
+C2=@(x) Ci(7, 14,0.5, 1.1,x);
+C3=@(x) Ci(2,9,0.2, 0.7,x); 
+C4=@(x) Ci(15,20,5, 1,x);
+Consecuencias=@(x)[C1(x);  C2(x); C3(x); C4(x)];
+%Determinación del rango de la salida: 
+centSalidas=@(ran) cellfun(@(x) MFCentroid(x, ran), num2cell(Consecuencias(ran),2));
+
+%Reglas
+opinf=@(x,y) min(x,y); 
+
+R1=@(x,input) opinf(C1(x), A1(input)); 
+R2=@(x,input) opinf(C2(x), A2(input)); 
+R3=@(x,input) opinf(C3(x), A3(input)); 
+R4=@(x,input) opinf(C4(x), A4(input)); 
+
+Reglas=@(x, input) [R1(x, input); R2(x, input); R3(x, input);  R4(x, input)];
+
+%Salidas
+Salida=@(x, input) max(Reglas(x, input)); 
+centroide=@(ran, input) MFCentroid(Salida(ran, input), ran); 
+
+
+%Ejemplo
+entrada=4;
+%Condiciones de las antecedencias
+paso=0.1; 
+xi=0; 
+xn=20; 
+rango=xi:paso:xn; 
+
+%Condiciones de las consecuencias
+pasoc=0.1; 
+xic=-5; 
+xnc=25; 
+rangoc=xic:pasoc:xnc;
+
+%Plot
+centSalidas=centSalidas(rangoc); 
+limitSal=[min(centSalidas), max(centSalidas)]; 
+
+figure(1)
+subplot(2,2,1)
+plot(rango, Antecedencias(rango))
+hold on
+stem(entrada, 1)
+hold off
+
+subplot(2,2,2)
+plot(rangoc, Consecuencias(rangoc))
+axis([xic xnc 0 1]);
+hold on
+stem(limitSal, [1,1]); 
+hold off
+
+subplot(2,2,3)
+plot(rangoc, Reglas(rangoc, entrada))
+hold on
+stem(limitSal, [1,1]); 
+hold off
+axis([xic xnc 0 1]);
+
+subplot(2,2,4)
+plot(rangoc, Salida(rangoc, entrada))
+centroide=@(x)centroide(rangoc, x)
+hold on
+stem(centroide(entrada),1)
+stem(limitSal, [1,1]); 
+
+hold off
+centroide(entrada)
+
+
+
+figure(2)
+matCent=@(ran) matfun(@(x) centroide(x), ran);
+plot(rango, matCent(rango))
